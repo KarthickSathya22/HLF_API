@@ -115,7 +115,7 @@ def predict_tw():
     res.append("{:,}".format(int(clobal)))
 
     asset = request.json["assetvalue"]
-    predict_request.append(asset)
+    predict_request.append(float(asset))
     res.append("{:,}".format(int(asset)))
     
     cat = request.json["productcat"]
@@ -168,11 +168,11 @@ def predict_tw():
     res.append(instal)
     
     chasasset = request.json["chasasset"]
-    predict_request.append(chasasset)
+    predict_request.append(float(chasasset))
     res.append("{:,}".format(int(chasasset)))
     
     chasinitial = request.json["chasinitial"]
-    predict_request.append(chasinitial)
+    predict_request.append(float(chasinitial))
     res.append("{:,}".format(int(chasinitial)))
     
     chasfin = int(chasasset) - int(chasinitial)
@@ -189,7 +189,7 @@ def predict_tw():
     res.append("{:,}".format(int(emi)))
     
     inflow = request.json["totinflow"]
-    predict_request.append(inflow)
+    predict_request.append(float(inflow))
     res.append("{:,}".format(int(inflow)))
     
     score = request.json["score"]
