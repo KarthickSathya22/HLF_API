@@ -116,7 +116,7 @@ def predict_tw():
 
     asset = request.json["assetvalue"]
     predict_request.append(float(asset))
-    res.append("{:,}".format(int(asset)))
+    res.append("{:,}".format(float(asset)))
     
     cat = request.json["productcat"]
     prod_cat = {1784:"LOAN AGAINST PROPERTY",
@@ -168,15 +168,15 @@ def predict_tw():
     res.append(instal)
     
     chasasset = request.json["chasasset"]
-    predict_request.append(float(chasasset))
-    res.append("{:,}".format(int(chasasset)))
+    predict_request.append(chasasset)
+    res.append(chasasset)
     
     chasinitial = request.json["chasinitial"]
     predict_request.append(float(chasinitial))
-    res.append("{:,}".format(int(chasinitial)))
+    res.append("{:,}".format(float(chasinitial)))
     
-    chasfin = int(chasasset) - int(chasinitial)
-    predict_request.append(chasfin)
+    chasfin = float(chasasset) - float(chasinitial)
+    predict_request.append(float(chasfin))
     res.append("{:,}".format(int(chasfin)))
     
     fininter = request.json["finaninterest"]
@@ -190,7 +190,7 @@ def predict_tw():
     
     inflow = request.json["totinflow"]
     predict_request.append(float(inflow))
-    res.append("{:,}".format(int(inflow)))
+    res.append("{:,}".format(float(inflow)))
     
     score = request.json["score"]
     predict_request.append(score)
@@ -207,7 +207,7 @@ def predict_tw():
     
     #############################################
     #l2v,af,gross,bk,es,am,gl
-    loan = (int(chasfin)*100/int(chasasset)) 
+    loan = (int(chasfin)*100/float(chasasset)) 
     if (loan<85):
         loan_to_value = 120
     elif ((loan>=85) and (loan <=90)):
@@ -234,7 +234,7 @@ def predict_tw():
     res.append(asset_finance)
     af = (10/asset_finance)*100
     
-    gi = int(inflow)*12
+    gi = float(inflow)*12
     if gi > 12000:
         grossincome = 100
     elif gi > 8000 and gi<=12000:
