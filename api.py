@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue May 19 17:14:55 2020
-
 @author: ESFITA-USER
 """
 """
@@ -33,7 +32,6 @@ In clobal we need to Bank Statement.
     "clobal": "10200",
     "cibil": "900"
 }
-
 #Commercial Vehicle:
 {
     "martial_status": "2750",
@@ -111,8 +109,8 @@ def predict_tw():
     #Uploading Bank Stmt file:
     file = request.json['clobal']
     clobal =  float(file)
-    predict_request.append("{:.2f}".format(clobal))
-    res.append("{:,}".format(int(clobal)))
+    predict_request.append(clobal)
+    res.append(clobal)
 
     asset = request.json["assetvalue"]
     predict_request.append(float(asset))
