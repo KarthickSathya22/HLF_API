@@ -575,28 +575,45 @@ def predict_cv():
     #Loan to Value:
     loan = ((int(chasfin)*100)/int(chasasset))
     if (loan<75):
+        loan_to_value = 100
         predict_request.append(100)
         res.append(100)
     elif ((loan>=75) and (loan <=80)):
+        loan_to_value = 75
         predict_request.append(75)
         res.append(75)
     elif (loan>80):
+        loan_to_value = 0
         predict_request.append(0)
         res.append(0)
+     
+    if  loan_to_value != 0:    
+        l2v = (20/loan_to_value)*100
+    else:
+        l2v = 0                                #l2v,col,dues,banks,ep
         
     #Collateral
     if int(asset) > (2*chasfin):
+        collateral = 120
         predict_request.append(120)
         res.append(120)
     elif int(asset) == (2*chasfin):
+        collateral = 75
         predict_request.append(75)
         res.append(75)    
     elif int(asset) == chasfin:
+        collateral = 40
         predict_request.append(40)
         res.append(40)    
     else:
+        collateral = 0
         predict_request.append(0)
         res.append(0)
+        
+    if collateral != 0:
+        col = (40/collateral)*100
+    else:
+        col = 0
     
     #OverDue:    
     overdue = request.json["od"]
@@ -604,11 +621,18 @@ def predict_cv():
     od_cat = {0:"No",1:"Yes"}
     res.append(od_cat.get(int(od)))
     if int(od) == 0:
+        due = 100
         predict_request.append(100)
         res.append(100)
     elif int(od) == 1:
+        due = 0
         predict_request.append(0)
         res.append(0)
+        
+    if due !=0:
+        dues = (10/due)*100
+    else:
+        dues = 0
     
     #Banking
     bank_p = request.json["bank_period"]
@@ -618,37 +642,58 @@ def predict_cv():
                   4:"Less than 6 months"}
     res.append(bank_p_cat.get(int(bank_p)))
     if int(bank_p) == 1:
+        bank = 100
         predict_request.append(100)
         res.append(100)
     elif int(bank_p) == 2:
+        bank = 50
         predict_request.append(50)
         res.append(50)
     elif int(bank_p) == 3:
+        bank = 0
         predict_request.append(0)
         res.append(0)
     elif int(bank_p) == 4:
+        bank = -50
         predict_request.append(-50)
         res.append(-50)
+        
+    if bank != 0:
+        banks = (10/bank)*100
+    else:
+        banks = 0
+        
     
     #Earning Potential:    
     if int(market) == 569 and int(segment) == 2697:
+        potential = 60
         predict_request.append(60)
         res.append(60)
     
     elif int(market) == 569 and int(segment) == 2698:
+        potential = 25
         predict_request.append(25)
         res.append(25)
             
     elif int(market) == 566:
+        potential = 0
         predict_request.append(0)
         res.append(0)
     
     elif int(market) == 568:
+        potential = 80
         predict_request.append(80)
         res.append(80)
+        
     else:
+        potential = 0
         predict_request.append(0)
         res.append(0)
+        
+    if potential !=0:
+        ep = (20/potential)*100
+    else:
+        ep = 0
        
     ##############################
     
@@ -683,8 +728,10 @@ def predict_cv():
     if output >= 81 and output <=90:
         condition = 'Good'
     if output > 90:
-        condition = 'Superior' 
-    return jsonify(prediction=output,result_category = condition)
+        condition = 'Superior'
+        
+    #l2v,col,dues,banks,ep
+    return jsonify(prediction=output,result_category = condition,Total_Score_Earned_A = l2v ,Total_Score_Earned_B = ep+banks,Total_Score_Earned_C = dues,Total_Score_Earned_D = col)
 
 @app.route('/predict_scv_api',methods=['POST','GET'])
 def predict_scv():
@@ -873,28 +920,45 @@ def predict_scv():
     #Loan to Value:
     loan = ((int(chasfin)*100)/int(chasasset))
     if (loan<75):
+        loantovalue = 100
         predict_request.append(100)
         res.append(100)
     elif ((loan>=75) and (loan <=80)):
+        loantovalue = 75
         predict_request.append(75)
         res.append(75)
     elif (loan>80):
+        loantovalue = 0
         predict_request.append(0)
         res.append(0)
+    
+    if loantovalue != 0:
+        l2v = (20/loantovalue)*100
+    else:
+        l2v = 0
         
     #Collateral
     if int(asset) > (2*chasfin):
+        collateral = 120
         predict_request.append(120)
         res.append(120)
     elif int(asset) == (2*chasfin):
+        collateral = 75
         predict_request.append(75)
         res.append(75)    
     elif int(asset) == chasfin:
+        collateral = 40
         predict_request.append(40)
         res.append(40)    
     else:
+        collateral = 0
         predict_request.append(0)
         res.append(0)
+        
+    if collateral != 0:
+        col = (40/collateral)*100
+    else:
+        col = 0
     
     #OverDue:    
     overdue = request.json["od"]
@@ -902,11 +966,18 @@ def predict_scv():
     od_cat = {0:"No",1:"Yes"}
     res.append(od_cat.get(int(od)))
     if int(od) == 0:
+        due = 100
         predict_request.append(100)
         res.append(100)
     elif int(od) == 1:
+        due = 0
         predict_request.append(0)
         res.append(0)
+    
+    if due != 0:
+        dues = (10/due)*100
+    else:
+        dues = 0 
     
     #Banking
     bank_p = request.json["bank_period"]
@@ -916,37 +987,58 @@ def predict_scv():
                   4:"Less than 6 months"}
     res.append(bank_p_cat.get(int(bank_p)))
     if int(bank_p) == 1:
+        bank = 100
         predict_request.append(100)
         res.append(100)
     elif int(bank_p) == 2:
+        bank = 50
         predict_request.append(50)
         res.append(50)
     elif int(bank_p) == 3:
+        bank = 0
         predict_request.append(0)
         res.append(0)
     elif int(bank_p) == 4:
+        bank = -50
         predict_request.append(-50)
         res.append(-50)
+        
+    if bank != 0:
+        banks = ep = (10/bank)*100
+    else:
+        banks = 0
     
     #Earning Potential:    
     if int(market) == 569 and int(segment) == 2697:
+        potential = 60
         predict_request.append(60)
         res.append(60)
     
     elif int(market) == 569 and int(segment) == 2698:
+        potential = 25
         predict_request.append(25)
         res.append(25)
             
     elif int(market) == 566:
+        potential = 0
         predict_request.append(0)
         res.append(0)
     
     elif int(market) == 568:
+        potential = 80
         predict_request.append(80)
         res.append(80)
+    
     else:
+        potential = 0
         predict_request.append(0)
         res.append(0)
+        
+    if potential != 0:
+        ep = (20/potential)*100
+    
+    else:
+        ep = 0
        
     ##############################
     
@@ -982,7 +1074,9 @@ def predict_scv():
         condition = 'Good'
     if output > 90:
         condition = 'Superior' 
-    return jsonify(prediction=output,result_category = condition)
+        
+    #l2v,col,dues,banks,ep
+    return jsonify(prediction=output,result_category = condition,Total_Score_Earned_A = l2v ,Total_Score_Earned_B = ep+banks,Total_Score_Earned_C = dues,Total_Score_Earned_D = col)
 
 if __name__ == "__main__":
     app.run(debug=True)
