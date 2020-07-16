@@ -77,6 +77,7 @@ app = Flask(__name__)
 
 #Loading a model:
 model_tw = pickle.load(open('model_tw_iso.pkl', 'rb'))
+model_tw_ntc = pickle.load(open('model_tw_gbdt.pkl', 'rb'))
 model_cv = pickle.load(open('model_cv_iso.pkl', 'rb'))
 model_scv = pickle.load(open('model_scv_iso.pkl', 'rb'))
 
@@ -368,6 +369,136 @@ def predict_tw():
         
     #l2v,af,gross,bk,es,am,gl
     return jsonify(prediction = output,result_category = condition,Total_Score_Earned_A = l2v+af ,Total_Score_Earned_B = gross+bk,Total_Score_Earned_C = es+am ,geolimit=gl)
+
+
+@app.route('/predict_tw_ntc_api',methods=['POST','GET'])
+def predict_tw_ntc():
+    '''
+    For rendering results on HTML GUI
+    '''
+    predict_request = []
+    res = []
+    
+    age = request.json["age"]
+    predict_request.append(age)
+    res.append(age)
+    
+    year = request.json["staying_year"]
+    predict_request.append(year)
+    res.append(year)
+    
+    inflow = request.json["totinflow"]
+    predict_request.append(float(inflow))
+    res.append("{:,}".format(float(inflow)))
+    
+    dep = request.json["dependants"]
+    predict_request.append(dep)
+    res.append(dep)
+    
+    chasasset = request.json["chasasset"]
+    predict_request.append(chasasset)
+    res.append(chasasset)
+    
+    chasinitial = request.json["chasinitial"]
+    predict_request.append(float(chasinitial))
+    res.append("{:,}".format(float(chasinitial)))
+    
+    chasfin = float(chasasset) - float(chasinitial)
+    predict_request.append(float(chasfin))
+    res.append("{:,}".format(int(chasfin)))
+    
+    fininter = request.json["finaninterest"]
+    predict_request.append(fininter)
+    res.append(fininter)
+    
+    tenure = request.json["tenure"]
+    interestamount = (int(chasfin)*(int(tenure)/12)*(float(fininter)))/100
+    emi = (int(chasfin)+int(interestamount))/int(tenure)
+    predict_request.append(int(emi))
+    res.append("{:,}".format(int(emi)))
+
+    
+    predict_request.append(tenure)
+    res.append(tenure)
+    
+    od = request.json["od"]
+    predict_request.append(od)
+    res.append(od)
+    
+    cibil = request.json['cibil']
+    predict_request.append(cibil)
+    res.append(cibil)
+    
+    instal = request.json["instalcount"]
+    predict_request.append(instal)
+    res.append(instal)
+    
+    brand = request.json["brand"]
+    brand_type = {1:[0,0,0,0,0,0,0,0],
+                  1360:[0,1,0,0,0,0,0,0],
+                  1542:[1,0,0,0,0,0,0,0], 
+                  1544:[0,1,0,0,0,0,0,0],
+                  1547:[0,0,0,0,0,0,0,1],
+                  1546:[0,0,0,0,0,1,0,0],
+                  1647:[0,0,0,0,0,0,1,0],
+                  1549:[0,0,0,0,1,0,0,0]
+                  }
+    predict_request.extend(brand_type.get(int(brand)))
+    
+    gender_dict = {'M':[0,1],'F':[1,0]}
+    cate = request.json["gender"]
+    predict_request.extend(gender_dict.get(cate))
+    
+    status = request.json["martial_status"]
+    married = {2750:[1,0],2751:[0,1]}
+    predict_request.extend(married.get(int(status)))
+    
+    resi = request.json["residence"]
+    residence = {2755:[1,0],2756:[0,1]}
+    predict_request.extend(residence.get(int(resi)))
+    
+    pincode = request.json["pincode"]
+    pin_type = {380001:  [1,0,0,0,0,0,0,0,0,0],
+                  733134:[0,1,0,0,0,0,0,0,0,0],
+                  518002:[0,0,1,0,0,0,0,0,0,0], 
+                  492001:[0,0,0,1,0,0,0,0,0,0],
+                  382340:[0,0,0,0,1,0,0,0,0,0],
+                  462001:[0,0,0,0,0,1,0,0,0,0],
+                  533101:[0,0,0,0,0,0,1,0,0,0],
+                  201301:[0,0,0,0,0,0,0,1,0,0],
+                  480001:[0,0,0,0,0,0,0,0,1,0],
+                  534201:[0,0,0,0,0,0,0,0,0,1]
+                  }
+       
+    if int(pincode) in pin_type:
+        predict_request.extend(pin_type.get(int(pincode)))
+    else:
+        predict_request.extend([0,0,0,0,0,0,0,0,0,0])
+        
+    check_bounce = request.json["check_bounce"]
+    predict_request.append(check_bounce)
+    res.append(check_bounce)
+    
+    ####################################################################
+    predict_request = list(map(float,predict_request))
+    predict_request = np.array(predict_request)
+    prediction  = model_tw_ntc.predict_proba([predict_request])[0][0]
+    output = float(prediction * 100)
+    print(output)
+    
+    if float(output) < 50:
+        condition = 'Risky'
+    if float(output) >= 50 and output < 70:
+        condition = 'Barely Acceptable'
+    if float(output) >= 70 and float(output) <90:
+        condition = 'Medium'
+    if float(output) >= 90 and float(output) < 100:
+        condition = 'Good'
+    if float(output) == 100:
+        condition = 'Superior'
+        
+    return jsonify(prediction = output,result_category = condition)
+
 
 @app.route('/predict_cv_api',methods=['POST','GET'])
 def predict_cv():
