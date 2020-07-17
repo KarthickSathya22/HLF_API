@@ -475,7 +475,7 @@ def predict_tw_ntc():
     else:
         predict_request.extend([0,0,0,0,0,0,0,0,0,0])
         
-    check_bounce = request.json["check_bounce"]
+    check_bounce = request.json["chequeBounce"]
     predict_request.append(check_bounce)
     res.append(check_bounce)
     
