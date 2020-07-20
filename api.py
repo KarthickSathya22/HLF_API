@@ -77,7 +77,7 @@ app = Flask(__name__)
 
 #Loading a model:
 model_tw = pickle.load(open('model_tw_iso.pkl', 'rb'))
-model_tw_ntc = pickle.load(open('model_tw_gbdt.pkl', 'rb'))
+model_tw_ntc = pickle.load(open('model_tw_ntc_iso.pkl', 'rb'))
 model_cv = pickle.load(open('model_cv_iso.pkl', 'rb'))
 model_scv = pickle.load(open('model_scv_iso.pkl', 'rb'))
 
