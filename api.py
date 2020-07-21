@@ -77,7 +77,7 @@ app = Flask(__name__)
 
 #Loading a model:
 model_tw = pickle.load(open('model_tw_iso.pkl', 'rb'))
-model_tw_ntc = pickle.load(open('model_tw_ntc_iso.pkl', 'rb'))
+model_tw_ntc = pickle.load(open('model_tw_ntc_sig.pkl', 'rb'))
 model_cv = pickle.load(open('model_cv_iso.pkl', 'rb'))
 model_scv = pickle.load(open('model_scv_iso.pkl', 'rb'))
 
@@ -479,9 +479,14 @@ def predict_tw_ntc():
     predict_request.append(check_bounce)
     res.append(check_bounce)
     
+    close_balance = request.json["clobal"]
+    predict_request.append(close_balance)
+    res.append(close_balance)
+    
     ####################################################################
     predict_request = list(map(float,predict_request))
     predict_request = np.array(predict_request)
+    print(model_tw_ntc.predict_proba([predict_request]))
     prediction  = model_tw_ntc.predict_proba([predict_request])[0][0]
     output = float(prediction * 100)
     print(output)
