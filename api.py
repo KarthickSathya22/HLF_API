@@ -1240,27 +1240,27 @@ def bank_stmt_readers(file,bank):
     df.reset_index(drop=True,inplace=True)
     #Hashtable for Each Bank:
     banks = {"axis":{"date_col_index":0,"bal_col_index":5,
-                     "columns":['Tran Date', 'Chq No', 'Particulars', 'Debit', 'Credit', 'Balance'],
+                     "columns":['tran_Date', 'chq_No', 'particulars', 'debit', 'credit', 'balance'],
                      "narration_col_index":2
                     },
              "hdfc":{"date_col_index":0,"bal_col_index":6,
-                     "columns":['Date', 'Narration', 'Chq./Ref.No.', 'Value Dt', 'Withdrawal Amt.','Deposit Amt.', 'Closing Balance'],
+                     "columns":['date', 'narration', 'chq_No', 'value_Dt', 'withdrawal_Amt','deposit_Amt', 'closing_Balance'],
                      "narration_col_index":1
                     },
              "icici":{"date_col_index":1,"bal_col_index":7,
-                      "columns":["S No.","Value Date","Transaction Date","Cheque Number","Transaction Remarks","Withdrawal Amount","Deposit Amount","Balance"],
+                      "columns":["serial_No","value_Date","transaction_Date","cheque_Number","transaction_Remarks","withdrawal_Amount","deposit_Amount","balance"],
                       "narration_col_index":4
                      },
              "iob":{"date_col_index":0,"bal_col_index":6,
-                    "columns":['DATE', 'CHQ', 'NARATION', 'COD', 'DEBIT', 'CREDIT', 'BALANCE'],
+                    "columns":['date', 'chq_No', 'narration', 'cod', 'debit', 'credit', 'balance'],
                     "narration_col_index":2
                    },
              "lakshmi_vilas":{"date_col_index":0,"bal_col_index":5,
-                              "columns":["Transaction Date","Value Date","Description","Reference Number","Amount","Balance"],
+                              "columns":["transaction_Date","value_Date","description","reference_Number","amount","balance"],
                               "narration_col_index":2
                              },
             "andhra_bank":{"date_col_index":0,"bal_col_index":5,
-                              "columns":["Transaction Date","Chq No","Transaction Description","Debit","Credit","Balance"],
+                              "columns":["transaction_Date","chq_No","transaction_Description","debit","credit","balance"],
                               "narration_col_index":2
                              }
             }
