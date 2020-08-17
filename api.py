@@ -1312,7 +1312,10 @@ def bank_stmt_readers(file,bank):
     df.columns = banks[bank].get("columns")
     #Paring Date:
     df.iloc[:,date_col_index] = df.iloc[:,date_col_index].astype(str)
-    return df.to_json(orient="records")
+    result = []
+    result.append(list(df.columns))
+    result.extend(df.values.tolist())
+    return result
 
 @app.route('/bank_stmt_api',methods=['POST','GET'])
 def bank_stmt():
