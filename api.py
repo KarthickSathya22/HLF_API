@@ -74,7 +74,7 @@ import pandas as pd
 import dateutil
 import tabula
 import numpy as np
-from flask import Flask, request,jsonify
+from flask import Flask, request,jsonify,Response
 import pickle
 
 app = Flask(__name__)
@@ -1240,19 +1240,28 @@ def bank_stmt_readers(file,bank):
     df.reset_index(drop=True,inplace=True)
     #Hashtable for Each Bank:
     banks = {"axis":{"date_col_index":0,"bal_col_index":5,
-                     "columns":['Tran Date', 'Chq No', 'Particulars', 'Debit', 'Credit', 'Balance']
+                     "columns":['Tran Date', 'Chq No', 'Particulars', 'Debit', 'Credit', 'Balance'],
+                     "narration_col_index":2
                     },
              "hdfc":{"date_col_index":0,"bal_col_index":6,
-                     "columns":['Date', 'Narration', 'Chq./Ref.No.', 'Value Dt', 'Withdrawal Amt.','Deposit Amt.', 'Closing Balance']
+                     "columns":['Date', 'Narration', 'Chq./Ref.No.', 'Value Dt', 'Withdrawal Amt.','Deposit Amt.', 'Closing Balance'],
+                     "narration_col_index":1
                     },
              "icici":{"date_col_index":1,"bal_col_index":7,
-                      "columns":["S No.","Value Date","Transaction Date","Cheque Number","Transaction Remarks","Withdrawal Amount","Deposit Amount","Balance"]
+                      "columns":["S No.","Value Date","Transaction Date","Cheque Number","Transaction Remarks","Withdrawal Amount","Deposit Amount","Balance"],
+                      "narration_col_index":4
                      },
              "iob":{"date_col_index":0,"bal_col_index":6,
-                    "columns":['DATE', 'CHQ', 'NARATION', 'COD', 'DEBIT', 'CREDIT', 'BALANCE']
+                    "columns":['DATE', 'CHQ', 'NARATION', 'COD', 'DEBIT', 'CREDIT', 'BALANCE'],
+                    "narration_col_index":2
                    },
              "lakshmi_vilas":{"date_col_index":0,"bal_col_index":5,
-                              "columns":["Transaction Date","Value Date","Description","Reference Number","Amount","Balance"]
+                              "columns":["Transaction Date","Value Date","Description","Reference Number","Amount","Balance"],
+                              "narration_col_index":2
+                             },
+            "andhra_bank":{"date_col_index":0,"bal_col_index":5,
+                              "columns":["Transaction Date","Chq No","Transaction Description","Debit","Credit","Balance"],
+                              "narration_col_index":2
                              }
             }
     #Gettitng date column index for correspoding bank:
@@ -1328,10 +1337,13 @@ def bank_stmt_readers(file,bank):
     df.columns = banks[bank].get("columns")
     #Paring Date:
     df.iloc[:,date_col_index] = df.iloc[:,date_col_index].astype(str)
-    result = []
-    result.append(list(df.columns))
-    result.extend(df.values.tolist())
-    return result
+    #Gettitng description column index for correspoding bank:
+    narration_col_index = banks[bank].get("narration_col_index")
+    narration = []
+    for i in df.iloc[:,narration_col_index]:
+        narration.append(re.sub('[^A-Za-z0-9]+', ' ', i))
+    df.iloc[:,narration_col_index] = narration 
+    return df
 
 @app.route('/bank_stmt_api',methods=['POST','GET'])
 def bank_stmt():
@@ -1343,7 +1355,7 @@ def bank_stmt():
     Name = request.form["name"]
     print(Name)
     result = bank_stmt_readers(Statement,Name)
-    return jsonify(transactions=result)
+    return jsonify(transactions = result.to_dict(orient="records"))
 
 if __name__ == "__main__":
     app.run(debug=True)
