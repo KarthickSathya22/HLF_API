@@ -69,6 +69,10 @@ In clobal we need to Bank Statement.
     "cibil": "900"
 }
 """
+# Importing Libraries:
+import pandas as pd
+import dateutil
+import tabula
 import numpy as np
 from flask import Flask, request,jsonify
 import pickle
@@ -1213,6 +1217,114 @@ def predict_scv():
         
     #l2v,col,dues,banks,ep
     return jsonify(prediction=output,result_category = condition,Total_Score_Earned_A = l2v ,Total_Score_Earned_B = ep+banks,Total_Score_Earned_C = dues,Total_Score_Earned_D = col)
+
+#Function to read all bank statements:
+def bank_stmt_readers(file,bank):
+    """
+    This function going to read bank statements using tabula-py
+    """
+    #Reading *.PDF Statement: 
+    tables = tabula.read_pdf(file,pages="all")
+    
+    #Combining all tables that are get Extracted: 
+    table = []
+    for i in tables:
+        table.extend(i.values.tolist())
+    #Read all tables as dataframe:
+    df = pd.DataFrame(table)
+    #Make all the None values are Null Values:
+    df[df.values == None] = np.nan
+    #Removing Null values date records: 
+    df = df[df.iloc[:,0].notnull()]
+    #Reset Dataframe Index:
+    df.reset_index(drop=True,inplace=True)
+    #Hashtable for Each Bank:
+    banks = {"axis":{"date_col_index":0,"bal_col_index":5,
+                     "columns":['Tran Date', 'Chq No', 'Particulars', 'Debit', 'Credit', 'Balance']
+                    },
+             "hdfc":{"date_col_index":0,"bal_col_index":6,
+                     "columns":['Date', 'Narration', 'Chq./Ref.No.', 'Value Dt', 'Withdrawal Amt.','Deposit Amt.', 'Closing Balance']
+                    },
+             "icici":{"date_col_index":1,"bal_col_index":7,
+                      "columns":["S No.","Value Date","Transaction Date","Cheque Number","Transaction Remarks","Withdrawal Amount","Deposit Amount","Balance"]
+                     },
+             "iob":{"date_col_index":0,"bal_col_index":6,
+                    "columns":['DATE', 'CHQ', 'NARATION', 'COD', 'DEBIT', 'CREDIT', 'BALANCE']
+                   },
+             "lakshmi_vilas":{"date_col_index":0,"bal_col_index":5,
+                              "columns":["Transaction Date","Value Date","Description","Reference Number","Amount","Balance"]
+                             }
+            }
+    #Gettitng date column index for correspoding bank:
+    date_col_index = banks[bank].get("date_col_index")
+    #Extracting Records that contain Date:
+    index = []
+    for i in range(len(df.iloc[:,0])):
+        try:
+            if(dateutil.parser.parse(df.iloc[i,date_col_index])):
+                index.append(True)
+        except:
+            index.append(False)
+    #Filtering Records that contain Date:
+    df = df[index]
+    #Parse date column:
+    df.iloc[:,date_col_index] = df.iloc[:,date_col_index].apply(dateutil.parser.parse, dayfirst=True)
+    #Reset Dataframe Index:
+    df.reset_index(drop=True,inplace=True)
+    #Gettitng balance column index for correspoding bank:
+    bal_col_index = banks[bank].get("bal_col_index")
+    #Applying Mask:
+    if(bank != "axis"):
+        if(df.shape[1] > bal_col_index+1):
+            for i in range(len(df)):
+                if(str(df.iloc[i,bal_col_index+1]) != "nan"):
+                    df.iloc[i,bal_col_index] = df.iloc[i,bal_col_index+1]
+    #Filling null valued balance column: 
+    value_to_null = []
+    if(df.iloc[:,bal_col_index].isnull().sum() >1):
+        for i in range(len(df)):
+            if(str(df.iloc[i,bal_col_index]) == "nan"):
+                start = bal_col_index
+                while(str(df.iloc[i,start]) == "nan"):
+                    start = start - 1
+                df.iloc[i,bal_col_index] = df.iloc[i,start]
+                value_to_null.append([i,start])
+    #Apply filter:
+    df = df.iloc[:,:bal_col_index+1]
+    #Applying Regular Expression to parse Balance to avoid RS,MRP,INR:
+    bal_list = []
+    import re
+    try:
+        for i in range(len(df[bal_col_index])):
+            bal_list.append(re.findall("(?i)(?:(?:RS|INR|MRP)\.?\s?)(\d+(:?\,\d+)?(\,\d+)?(\.\d{1,2})?)",df[bal_col_index][i])[0][0])
+        df.iloc[:,bal_col_index] = bal_list
+    except:
+        pass
+    #Paring Closing balance:
+    df.iloc[:,bal_col_index] = df.iloc[:,bal_col_index].astype(str)
+    vals = []
+    for i in df.iloc[:,bal_col_index]:
+        vals.append("".join(i.split(",")))
+    df.iloc[:,bal_col_index] = vals
+    #TypeCasting Closing Balance:
+    df.iloc[:,bal_col_index] = pd.to_numeric(df.iloc[:,bal_col_index],errors='coerce')
+    #Return resultant dataframe:
+    df.columns = banks[bank].get("columns")
+    #Paring Date:
+    df.iloc[:,date_col_index] = df.iloc[:,date_col_index].astype(str)
+    return df.to_json(orient="records")
+
+@app.route('/bank_stmt_api',methods=['POST','GET'])
+def bank_stmt():
+    '''
+    For rendering results on HTML GUI
+    '''
+    Statement = request.files["file"]
+    print(Statement)
+    Name = request.form["name"]
+    print(Name)
+    result = bank_stmt_readers(Statement,Name)
+    return jsonify(transactions=result)
 
 if __name__ == "__main__":
     app.run(debug=True)
