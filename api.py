@@ -1279,16 +1279,32 @@ def bank_stmt_readers(file,bank):
             for i in range(len(df)):
                 if(str(df.iloc[i,bal_col_index+1]) != "nan"):
                     df.iloc[i,bal_col_index] = df.iloc[i,bal_col_index+1]
-    #Filling null valued balance column: 
+    ####################################################################               
+    #If the Balance column is missed:                
     value_to_null = []
-    if(df.iloc[:,bal_col_index].isnull().sum() >1):
-        for i in range(len(df)):
-            if(str(df.iloc[i,bal_col_index]) == "nan"):
-                start = bal_col_index
-                while(str(df.iloc[i,start]) == "nan"):
-                    start = start - 1
-                df.iloc[i,bal_col_index] = df.iloc[i,start]
-                value_to_null.append([i,start])
+    try:
+        if(df.iloc[:,bal_col_index].isnull().sum() >1):
+            for i in range(len(df)):
+                if(str(df.iloc[i,bal_col_index]) == "nan"):
+                    start = bal_col_index
+                    while(str(df.iloc[i,start]) == "nan"):
+                        start = start - 1
+                    df.iloc[i,bal_col_index] = df.iloc[i,start]
+                    value_to_null.append([i,start])
+                    
+    except IndexError:
+        df["new"] = np.nan
+        #Filling null valued balance column: 
+        value_to_null = []
+        if(df.iloc[:,bal_col_index].isnull().sum() >1):
+            for i in range(len(df)):
+                if(str(df.iloc[i,bal_col_index]) == "nan"):
+                    start = bal_col_index
+                    while(str(df.iloc[i,start]) == "nan"):
+                        start = start - 1
+                    df.iloc[i,bal_col_index] = df.iloc[i,start]
+                    value_to_null.append([i,start])
+    ###################################################################
     #Apply filter:
     df = df.iloc[:,:bal_col_index+1]
     #Applying Regular Expression to parse Balance to avoid RS,MRP,INR:
