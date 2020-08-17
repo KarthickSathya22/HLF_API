@@ -1343,6 +1343,9 @@ def bank_stmt_readers(file,bank):
     for i in df.iloc[:,narration_col_index]:
         narration.append(re.sub('[^A-Za-z0-9]+', ' ', i))
     df.iloc[:,narration_col_index] = narration 
+    #Filling Null values of transactions:
+    df.iloc[:,:-4] = df.iloc[:,:-4].fillna("-")
+    df.iloc[:,-4:] = df.iloc[:,-4:].fillna(0)
     return df
 
 @app.route('/bank_stmt_api',methods=['POST','GET'])
