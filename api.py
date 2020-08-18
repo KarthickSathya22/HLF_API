@@ -72,6 +72,7 @@ In clobal we need to Bank Statement.
 # Importing Libraries:
 import pandas as pd
 import dateutil
+import datetime
 import tabula
 import numpy as np
 from flask import Flask, request,jsonify,Response
@@ -1305,7 +1306,7 @@ def bank_stmt_readers(file,bank):
         df["new"] = np.nan
         #Filling null valued balance column: 
         value_to_null = []
-        if(df.iloc[:,bal_col_index].isnull().sum() >1):
+        if(df.iloc[:,bal_col_index].isnull().sum() >=1):
             for i in range(len(df)):
                 if(str(df.iloc[i,bal_col_index]) == "nan"):
                     start = bal_col_index
@@ -1342,10 +1343,24 @@ def bank_stmt_readers(file,bank):
     narration = []
     for i in df.iloc[:,narration_col_index]:
         narration.append(re.sub('[^A-Za-z0-9]+', ' ', i))
-    df.iloc[:,narration_col_index] = narration 
+    df.iloc[:,narration_col_index] = narration
+    #Handling Null values(According to hdfc1.pdf)(Combined values removing)
+    if(df.iloc[:,bal_col_index].isnull().sum() >= 1):
+        for i in range(len(df)):
+            if(str(df.iloc[i,bal_col_index]) == "nan"):
+                start = bal_col_index
+                while(str(df.iloc[i,start]) == "nan"):
+                    start = start - 1
+                if(len(str(df.iloc[i,start]).split()) > 1):
+                    df.iloc[i,bal_col_index] = str(df.iloc[i,start]).split()[-1]
+                    df.iloc[i,start] = str(df.iloc[i,start]).split()[0]
+    df.to_csv("test.csv",index = False)
     #Filling Null values of transactions:
     df.iloc[:,:-4] = df.iloc[:,:-4].fillna("-")
     df.iloc[:,-4:] = df.iloc[:,-4:].fillna(0)
+    #Handling Date dd-mm-YYYY
+    for i in np.arange(len(df.iloc[:,date_col_index])):
+        df.iloc[i,date_col_index] = datetime.datetime.strptime(str(df.iloc[i,date_col_index]), "%Y-%m-%d").strftime("%d-%m-%Y")
     return df
 
 @app.route('/bank_stmt_api',methods=['POST','GET'])
