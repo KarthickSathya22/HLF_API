@@ -1248,7 +1248,7 @@ def bank_stmt_readers(file,bank):
                      "columns":['tran_Date', 'particulars', 'chq_No', 'value_Date', 'debit','credit', 'balance'],
                      "narration_col_index":1
                     },
-             "icici":{"date_col_index":1,"bal_col_index":7,
+             "icici":{"date_col_index":2,"bal_col_index":7,
                       "columns":["serial_No","value_Date",'tran_Date',"chq_No","particulars","debit","credit","balance"],
                       "narration_col_index":4
                      },
