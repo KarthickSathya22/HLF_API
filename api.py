@@ -1219,6 +1219,33 @@ def predict_scv():
     #l2v,col,dues,banks,ep
     return jsonify(prediction=output,result_category = condition,Total_Score_Earned_A = l2v ,Total_Score_Earned_B = ep+banks,Total_Score_Earned_C = dues,Total_Score_Earned_D = col)
 
+def credit_debit_handler(result,bank):
+    #Hashtable for Each Bank:
+    banks = {"axis":{"clobal_index":5,"credit_index":4,"debit_index":3},
+             "hdfc":{"clobal_index":6,"credit_index":5,"debit_index":4},
+             "icici":{"clobal_index":7,"credit_index":6,"debit_index":5},
+             "iob":{"clobal_index":6,"credit_index":5,"debit_index":4},
+             }
+    clobal_index = banks[bank].get("clobal_index")
+    credit_index = banks[bank].get("credit_index")
+    debit_index = banks[bank].get("debit_index")
+    bal = []
+    i = 0
+    bal.append(list(result.iloc[0,debit_index:credit_index+1]))
+    for j in range(1,len(result.iloc[:,clobal_index])):
+        first = result.iloc[i,clobal_index]
+        second = result.iloc[j,clobal_index]
+        #print(first,second)
+        if(second<first):
+            bal.append([first - second,0])
+        elif(second > first):
+            bal.append([0,second-first])
+        else:
+            bal.append([0,0])
+        i = i+1
+    result.iloc[:,debit_index:credit_index+1] = bal
+    return result
+
 #Function to read all bank statements:
 def bank_stmt_readers(file,bank):
     """
@@ -1241,6 +1268,7 @@ def bank_stmt_readers(file,bank):
         df = df[df.iloc[:,0].notnull()]
         #Reset Dataframe Index:
         df.reset_index(drop=True,inplace=True)
+        df.to_csv("test.csv",index = False)
         #Hashtable for Each Bank:
         banks = {"axis":{"date_col_index":0,"bal_col_index":5,
                          "columns":['tran_Date', 'chq_No', 'particulars', 'debit', 'credit', 'balance'],
@@ -1356,13 +1384,16 @@ def bank_stmt_readers(file,bank):
                     if(len(str(df.iloc[i,start]).split()) > 1):
                         df.iloc[i,bal_col_index] = str(df.iloc[i,start]).split()[-1]
                         df.iloc[i,start] = str(df.iloc[i,start]).split()[0]
-        df.to_csv("test.csv",index = False)
         #Filling Null values of transactions:
         df.iloc[:,:-4] = df.iloc[:,:-4].fillna("-")
         df.iloc[:,-4:] = df.iloc[:,-4:].fillna(0)
         #Handling Date dd-mm-YYYY
         for i in np.arange(len(df.iloc[:,date_col_index])):
-            df.iloc[i,date_col_index] = datetime.datetime.strptime(str(df.iloc[i,date_col_index]), "%Y-%m-%d").strftime("%d-%m-%Y")
+            df.iloc[i,date_col_index] = datetime.datetime.strptime(str(df.iloc[i,date_col_index]), "%Y-%m-%d").strftime("%d-%m-%Y")   
+        #Calling a function to read handle credit and debit based on the closing balance:
+        #We passed a ban data which have credit and debit data:
+        if(bank != "lakshmi_vilas"):
+            df = credit_debit_handler(df,bank)
         response = "success"
     #If we not found table: 
     else:
