@@ -75,7 +75,7 @@ import dateutil
 import datetime
 import tabula
 import numpy as np
-from flask import Flask, request,jsonify,Response
+from flask import Flask, request,jsonify
 import pickle
 
 app = Flask(__name__)
@@ -1225,6 +1225,8 @@ def credit_debit_handler(result,bank):
              "hdfc":{"clobal_index":6,"credit_index":5,"debit_index":4},
              "icici":{"clobal_index":7,"credit_index":6,"debit_index":5},
              "iob":{"clobal_index":6,"credit_index":5,"debit_index":4},
+             "cub":{"clobal_index":5,"credit_index":4,"debit_index":3},
+             "kvb":{"clobal_index":7,"credit_index":6,"debit_index":5}
              }
     clobal_index = banks[bank].get("clobal_index")
     credit_index = banks[bank].get("credit_index")
@@ -1292,7 +1294,13 @@ def bank_stmt_readers(file,bank):
                 "andhra_bank":{"date_col_index":0,"bal_col_index":5,
                                   "columns":['tran_Date',"chq_No",'particulars',"debit","credit","balance"],
                                   "narration_col_index":2
-                                 }
+                                 },
+                 "cub":{"date_col_index":0,"bal_col_index":5,
+                              "columns":["tran_Date","particulars","chq_No","debit","CREDIT","balance"],
+                                   "narration_col_index":1},
+                 "kvb":{"date_col_index":0,"bal_col_index":7,
+                              "columns":["tran_Date","value_Date","branch","chq_No","particulars","debit","credit","balance"],
+                                   "narration_col_index":4}
                 }
         #Gettitng date column index for correspoding bank:
         date_col_index = banks[bank].get("date_col_index")
@@ -1313,7 +1321,7 @@ def bank_stmt_readers(file,bank):
         #Gettitng balance column index for correspoding bank:
         bal_col_index = banks[bank].get("bal_col_index")
         #Applying Mask:
-        if(bank != "axis"):
+        if((bank != "axis") | (bank != "federal")):
             if(df.shape[1] > bal_col_index+1):
                 for i in range(len(df)):
                     if(str(df.iloc[i,bal_col_index+1]) != "nan"):
@@ -1367,6 +1375,9 @@ def bank_stmt_readers(file,bank):
         df.columns = banks[bank].get("columns")
         #Paring Date:
         df.iloc[:,date_col_index] = df.iloc[:,date_col_index].astype(str)
+        ##################
+        df.to_csv("test.csv",index = False)
+        ##################
         #Gettitng description column index for correspoding bank:
         narration_col_index = banks[bank].get("narration_col_index")
         narration = []
@@ -1389,9 +1400,12 @@ def bank_stmt_readers(file,bank):
         df.iloc[:,:-4] = df.iloc[:,:-4].fillna("-")
         df.iloc[:,-4:] = df.iloc[:,-4:].fillna(0)
         #Handling Date dd-mm-YYYY
-        for i in np.arange(len(df.iloc[:,date_col_index])):
-            df.iloc[i,date_col_index] = datetime.datetime.strptime(str(df.iloc[i,date_col_index]), "%Y-%m-%d").strftime("%d-%m-%Y")
-        df.to_csv("test.csv",index = False)
+        try:
+            for i in np.arange(len(df.iloc[:,date_col_index])):
+                df.iloc[i,date_col_index] = datetime.datetime.strptime(str(df.iloc[i,date_col_index]), "%Y-%m-%d %H:%M:%S").strftime("%d-%m-%Y")
+        except:
+            for i in np.arange(len(df.iloc[:,date_col_index])):
+                df.iloc[i,date_col_index] = datetime.datetime.strptime(str(df.iloc[i,date_col_index]), "%Y-%m-%d").strftime("%d-%m-%Y")
         #Calling a function to read handle credit and debit based on the closing balance:
         #We passed a ban data which have credit and debit data:
         if(bank != "lakshmi_vilas"):
