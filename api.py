@@ -1226,142 +1226,150 @@ def bank_stmt_readers(file,bank):
     """
     #Reading *.PDF Statement: 
     tables = tabula.read_pdf(file,pages="all")
+    #If we found a table:
+    if(len(tables) != 0):
     
-    #Combining all tables that are get Extracted: 
-    table = []
-    for i in tables:
-        table.extend(i.values.tolist())
-    #Read all tables as dataframe:
-    df = pd.DataFrame(table)
-    #Make all the None values are Null Values:
-    df[df.values == None] = np.nan
-    #Removing Null values date records: 
-    df = df[df.iloc[:,0].notnull()]
-    #Reset Dataframe Index:
-    df.reset_index(drop=True,inplace=True)
-    #Hashtable for Each Bank:
-    banks = {"axis":{"date_col_index":0,"bal_col_index":5,
-                     "columns":['tran_Date', 'chq_No', 'particulars', 'debit', 'credit', 'balance'],
-                     "narration_col_index":2
-                    },
-             "hdfc":{"date_col_index":0,"bal_col_index":6,
-                     "columns":['tran_Date', 'particulars', 'chq_No', 'value_Date', 'debit','credit', 'balance'],
-                     "narration_col_index":1
-                    },
-             "icici":{"date_col_index":2,"bal_col_index":7,
-                      "columns":["serial_No","value_Date",'tran_Date',"chq_No","particulars","debit","credit","balance"],
-                      "narration_col_index":4
-                     },
-             "iob":{"date_col_index":0,"bal_col_index":6,
-                    "columns":['tran_Date', 'chq_No', 'particulars', 'cod', 'debit', 'credit', 'balance'],
-                    "narration_col_index":2
-                   },
-             "lakshmi_vilas":{"date_col_index":0,"bal_col_index":5,
-                              "columns":['tran_Date',"value_Date","particulars","chq_No","amount","balance"],
-                              "narration_col_index":2
-                             },
-            "andhra_bank":{"date_col_index":0,"bal_col_index":5,
-                              "columns":['tran_Date',"chq_No",'particulars',"debit","credit","balance"],
-                              "narration_col_index":2
-                             }
-            }
-    #Gettitng date column index for correspoding bank:
-    date_col_index = banks[bank].get("date_col_index")
-    #Extracting Records that contain Date:
-    index = []
-    for i in range(len(df.iloc[:,0])):
-        try:
-            if(dateutil.parser.parse(df.iloc[i,date_col_index])):
-                index.append(True)
-        except:
-            index.append(False)
-    #Filtering Records that contain Date:
-    df = df[index]
-    #Parse date column:
-    df.iloc[:,date_col_index] = df.iloc[:,date_col_index].apply(dateutil.parser.parse, dayfirst=True)
-    #Reset Dataframe Index:
-    df.reset_index(drop=True,inplace=True)
-    #Gettitng balance column index for correspoding bank:
-    bal_col_index = banks[bank].get("bal_col_index")
-    #Applying Mask:
-    if(bank != "axis"):
-        if(df.shape[1] > bal_col_index+1):
-            for i in range(len(df)):
-                if(str(df.iloc[i,bal_col_index+1]) != "nan"):
-                    df.iloc[i,bal_col_index] = df.iloc[i,bal_col_index+1]
-    ####################################################################               
-    #If the Balance column is missed:                
-    value_to_null = []
-    try:
-        if(df.iloc[:,bal_col_index].isnull().sum() >1):
-            for i in range(len(df)):
-                if(str(df.iloc[i,bal_col_index]) == "nan"):
-                    start = bal_col_index
-                    while(str(df.iloc[i,start]) == "nan"):
-                        start = start - 1
-                    df.iloc[i,bal_col_index] = df.iloc[i,start]
-                    value_to_null.append([i,start])
-                    
-    except IndexError:
-        df["new"] = np.nan
-        #Filling null valued balance column: 
+        #Combining all tables that are get Extracted: 
+        table = []
+        for i in tables:
+            table.extend(i.values.tolist())
+        #Read all tables as dataframe:
+        df = pd.DataFrame(table)
+        #Make all the None values are Null Values:
+        df[df.values == None] = np.nan
+        #Removing Null values date records: 
+        df = df[df.iloc[:,0].notnull()]
+        #Reset Dataframe Index:
+        df.reset_index(drop=True,inplace=True)
+        #Hashtable for Each Bank:
+        banks = {"axis":{"date_col_index":0,"bal_col_index":5,
+                         "columns":['tran_Date', 'chq_No', 'particulars', 'debit', 'credit', 'balance'],
+                         "narration_col_index":2
+                        },
+                 "hdfc":{"date_col_index":0,"bal_col_index":6,
+                         "columns":['tran_Date', 'particulars', 'chq_No', 'value_Date', 'debit','credit', 'balance'],
+                         "narration_col_index":1
+                        },
+                 "icici":{"date_col_index":2,"bal_col_index":7,
+                          "columns":["serial_No","value_Date",'tran_Date',"chq_No","particulars","debit","credit","balance"],
+                          "narration_col_index":4
+                         },
+                 "iob":{"date_col_index":0,"bal_col_index":6,
+                        "columns":['tran_Date', 'chq_No', 'particulars', 'cod', 'debit', 'credit', 'balance'],
+                        "narration_col_index":2
+                       },
+                 "lakshmi_vilas":{"date_col_index":0,"bal_col_index":5,
+                                  "columns":['tran_Date',"value_Date","particulars","chq_No","amount","balance"],
+                                  "narration_col_index":2
+                                 },
+                "andhra_bank":{"date_col_index":0,"bal_col_index":5,
+                                  "columns":['tran_Date',"chq_No",'particulars',"debit","credit","balance"],
+                                  "narration_col_index":2
+                                 }
+                }
+        #Gettitng date column index for correspoding bank:
+        date_col_index = banks[bank].get("date_col_index")
+        #Extracting Records that contain Date:
+        index = []
+        for i in range(len(df.iloc[:,0])):
+            try:
+                if(dateutil.parser.parse(df.iloc[i,date_col_index])):
+                    index.append(True)
+            except:
+                index.append(False)
+        #Filtering Records that contain Date:
+        df = df[index]
+        #Parse date column:
+        df.iloc[:,date_col_index] = df.iloc[:,date_col_index].apply(dateutil.parser.parse, dayfirst=True)
+        #Reset Dataframe Index:
+        df.reset_index(drop=True,inplace=True)
+        #Gettitng balance column index for correspoding bank:
+        bal_col_index = banks[bank].get("bal_col_index")
+        #Applying Mask:
+        if(bank != "axis"):
+            if(df.shape[1] > bal_col_index+1):
+                for i in range(len(df)):
+                    if(str(df.iloc[i,bal_col_index+1]) != "nan"):
+                        df.iloc[i,bal_col_index] = df.iloc[i,bal_col_index+1]
+        ####################################################################               
+        #If the Balance column is missed:                
         value_to_null = []
-        if(df.iloc[:,bal_col_index].isnull().sum() >=1):
+        try:
+            if(df.iloc[:,bal_col_index].isnull().sum() >1):
+                for i in range(len(df)):
+                    if(str(df.iloc[i,bal_col_index]) == "nan"):
+                        start = bal_col_index
+                        while(str(df.iloc[i,start]) == "nan"):
+                            start = start - 1
+                        df.iloc[i,bal_col_index] = df.iloc[i,start]
+                        value_to_null.append([i,start])
+                        
+        except IndexError:
+            df["new"] = np.nan
+            #Filling null valued balance column: 
+            value_to_null = []
+            if(df.iloc[:,bal_col_index].isnull().sum() >=1):
+                for i in range(len(df)):
+                    if(str(df.iloc[i,bal_col_index]) == "nan"):
+                        start = bal_col_index
+                        while(str(df.iloc[i,start]) == "nan"):
+                            start = start - 1
+                        df.iloc[i,bal_col_index] = df.iloc[i,start]
+                        value_to_null.append([i,start])
+        ###################################################################
+        #Apply filter:
+        df = df.iloc[:,:bal_col_index+1]
+        #Applying Regular Expression to parse Balance to avoid RS,MRP,INR:
+        bal_list = []
+        import re
+        try:
+            for i in range(len(df[bal_col_index])):
+                bal_list.append(re.findall("(?i)(?:(?:RS|INR|MRP)\.?\s?)(\d+(:?\,\d+)?(\,\d+)?(\.\d{1,2})?)",df[bal_col_index][i])[0][0])
+            df.iloc[:,bal_col_index] = bal_list
+        except:
+            pass
+        #Paring Closing balance:
+        df.iloc[:,bal_col_index] = df.iloc[:,bal_col_index].astype(str)
+        vals = []
+        for i in df.iloc[:,bal_col_index]:
+            vals.append("".join(i.split(",")))
+        df.iloc[:,bal_col_index] = vals
+        #TypeCasting Closing Balance:
+        df.iloc[:,bal_col_index] = pd.to_numeric(df.iloc[:,bal_col_index],errors='coerce')
+        #Return resultant dataframe:
+        df.columns = banks[bank].get("columns")
+        #Paring Date:
+        df.iloc[:,date_col_index] = df.iloc[:,date_col_index].astype(str)
+        #Gettitng description column index for correspoding bank:
+        narration_col_index = banks[bank].get("narration_col_index")
+        narration = []
+        for i in df.iloc[:,narration_col_index]:
+            narration.append(re.sub('[^A-Za-z0-9]+', ' ', i))
+        df.iloc[:,narration_col_index] = narration
+        #Handling Null values(According to hdfc1.pdf)(Combined values removing)
+        if(df.iloc[:,bal_col_index].isnull().sum() >= 1):
             for i in range(len(df)):
                 if(str(df.iloc[i,bal_col_index]) == "nan"):
                     start = bal_col_index
                     while(str(df.iloc[i,start]) == "nan"):
                         start = start - 1
-                    df.iloc[i,bal_col_index] = df.iloc[i,start]
-                    value_to_null.append([i,start])
-    ###################################################################
-    #Apply filter:
-    df = df.iloc[:,:bal_col_index+1]
-    #Applying Regular Expression to parse Balance to avoid RS,MRP,INR:
-    bal_list = []
-    import re
-    try:
-        for i in range(len(df[bal_col_index])):
-            bal_list.append(re.findall("(?i)(?:(?:RS|INR|MRP)\.?\s?)(\d+(:?\,\d+)?(\,\d+)?(\.\d{1,2})?)",df[bal_col_index][i])[0][0])
-        df.iloc[:,bal_col_index] = bal_list
-    except:
-        pass
-    #Paring Closing balance:
-    df.iloc[:,bal_col_index] = df.iloc[:,bal_col_index].astype(str)
-    vals = []
-    for i in df.iloc[:,bal_col_index]:
-        vals.append("".join(i.split(",")))
-    df.iloc[:,bal_col_index] = vals
-    #TypeCasting Closing Balance:
-    df.iloc[:,bal_col_index] = pd.to_numeric(df.iloc[:,bal_col_index],errors='coerce')
-    #Return resultant dataframe:
-    df.columns = banks[bank].get("columns")
-    #Paring Date:
-    df.iloc[:,date_col_index] = df.iloc[:,date_col_index].astype(str)
-    #Gettitng description column index for correspoding bank:
-    narration_col_index = banks[bank].get("narration_col_index")
-    narration = []
-    for i in df.iloc[:,narration_col_index]:
-        narration.append(re.sub('[^A-Za-z0-9]+', ' ', i))
-    df.iloc[:,narration_col_index] = narration
-    #Handling Null values(According to hdfc1.pdf)(Combined values removing)
-    if(df.iloc[:,bal_col_index].isnull().sum() >= 1):
-        for i in range(len(df)):
-            if(str(df.iloc[i,bal_col_index]) == "nan"):
-                start = bal_col_index
-                while(str(df.iloc[i,start]) == "nan"):
-                    start = start - 1
-                if(len(str(df.iloc[i,start]).split()) > 1):
-                    df.iloc[i,bal_col_index] = str(df.iloc[i,start]).split()[-1]
-                    df.iloc[i,start] = str(df.iloc[i,start]).split()[0]
-    df.to_csv("test.csv",index = False)
-    #Filling Null values of transactions:
-    df.iloc[:,:-4] = df.iloc[:,:-4].fillna("-")
-    df.iloc[:,-4:] = df.iloc[:,-4:].fillna(0)
-    #Handling Date dd-mm-YYYY
-    for i in np.arange(len(df.iloc[:,date_col_index])):
-        df.iloc[i,date_col_index] = datetime.datetime.strptime(str(df.iloc[i,date_col_index]), "%Y-%m-%d").strftime("%d-%m-%Y")
-    return df
+                    if(len(str(df.iloc[i,start]).split()) > 1):
+                        df.iloc[i,bal_col_index] = str(df.iloc[i,start]).split()[-1]
+                        df.iloc[i,start] = str(df.iloc[i,start]).split()[0]
+        df.to_csv("test.csv",index = False)
+        #Filling Null values of transactions:
+        df.iloc[:,:-4] = df.iloc[:,:-4].fillna("-")
+        df.iloc[:,-4:] = df.iloc[:,-4:].fillna(0)
+        #Handling Date dd-mm-YYYY
+        for i in np.arange(len(df.iloc[:,date_col_index])):
+            df.iloc[i,date_col_index] = datetime.datetime.strptime(str(df.iloc[i,date_col_index]), "%Y-%m-%d").strftime("%d-%m-%Y")
+        response = "success"
+    #If we not found table: 
+    else:
+        df = pd.DataFrame() 
+        response = "failed"
+    #Return Dataframe and Status Code:
+    return df,response
 
 @app.route('/bank_stmt_api',methods=['POST','GET'])
 def bank_stmt():
@@ -1372,8 +1380,11 @@ def bank_stmt():
     print(Statement)
     Name = request.form["name"]
     print(Name)
-    result = bank_stmt_readers(Statement,Name)
-    return jsonify(transactions = result.to_dict(orient="records"))
+    result,code = bank_stmt_readers(Statement,Name)
+    if(code == "success"):
+        return jsonify(status_Code = code,transactions = result.to_dict(orient="records"))
+    else:
+        return jsonify(status_Code = code)
 
 if __name__ == "__main__":
     app.run(debug=True)
