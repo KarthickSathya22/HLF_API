@@ -1236,9 +1236,9 @@ def credit_debit_handler(result,bank):
         first = result.iloc[i,clobal_index]
         second = result.iloc[j,clobal_index]
         #print(first,second)
-        if(second<first):
+        if(float(second)<float(first)):
             bal.append([first - second,0])
-        elif(second > first):
+        elif(float(second) > float(first)):
             bal.append([0,second-first])
         else:
             bal.append([0,0])
@@ -1268,7 +1268,6 @@ def bank_stmt_readers(file,bank):
         df = df[df.iloc[:,0].notnull()]
         #Reset Dataframe Index:
         df.reset_index(drop=True,inplace=True)
-        df.to_csv("test.csv",index = False)
         #Hashtable for Each Bank:
         banks = {"axis":{"date_col_index":0,"bal_col_index":5,
                          "columns":['tran_Date', 'chq_No', 'particulars', 'debit', 'credit', 'balance'],
@@ -1382,14 +1381,17 @@ def bank_stmt_readers(file,bank):
                     while(str(df.iloc[i,start]) == "nan"):
                         start = start - 1
                     if(len(str(df.iloc[i,start]).split()) > 1):
-                        df.iloc[i,bal_col_index] = str(df.iloc[i,start]).split()[-1]
+                        value = str(df.iloc[i,start]).split()[-1]
+                        value = "".join(value.split(","))
+                        df.iloc[i,bal_col_index] = float(value)
                         df.iloc[i,start] = str(df.iloc[i,start]).split()[0]
         #Filling Null values of transactions:
         df.iloc[:,:-4] = df.iloc[:,:-4].fillna("-")
         df.iloc[:,-4:] = df.iloc[:,-4:].fillna(0)
         #Handling Date dd-mm-YYYY
         for i in np.arange(len(df.iloc[:,date_col_index])):
-            df.iloc[i,date_col_index] = datetime.datetime.strptime(str(df.iloc[i,date_col_index]), "%Y-%m-%d").strftime("%d-%m-%Y")   
+            df.iloc[i,date_col_index] = datetime.datetime.strptime(str(df.iloc[i,date_col_index]), "%Y-%m-%d").strftime("%d-%m-%Y")
+        df.to_csv("test.csv",index = False)
         #Calling a function to read handle credit and debit based on the closing balance:
         #We passed a ban data which have credit and debit data:
         if(bank != "lakshmi_vilas"):
