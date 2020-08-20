@@ -1226,7 +1226,8 @@ def credit_debit_handler(result,bank):
              "icici":{"clobal_index":7,"credit_index":6,"debit_index":5},
              "iob":{"clobal_index":6,"credit_index":5,"debit_index":4},
              "cub":{"clobal_index":5,"credit_index":4,"debit_index":3},
-             "kvb":{"clobal_index":7,"credit_index":6,"debit_index":5}
+             "kvb":{"clobal_index":7,"credit_index":6,"debit_index":5},
+             "federal":{"clobal_index":7,"credit_index":6,"debit_index":5},
              }
     clobal_index = banks[bank].get("clobal_index")
     credit_index = banks[bank].get("credit_index")
@@ -1252,7 +1253,7 @@ def credit_debit_handler(result,bank):
 def bank_stmt_readers(file,bank):
     """
     This function going to read bank statements using tabula-py
-    """
+    """    
     #Reading *.PDF Statement: 
     tables = tabula.read_pdf(file,pages="all")
     #If we found a table:
@@ -1264,12 +1265,6 @@ def bank_stmt_readers(file,bank):
             table.extend(i.values.tolist())
         #Read all tables as dataframe:
         df = pd.DataFrame(table)
-        #Make all the None values are Null Values:
-        df[df.values == None] = np.nan
-        #Removing Null values date records: 
-        df = df[df.iloc[:,0].notnull()]
-        #Reset Dataframe Index:
-        df.reset_index(drop=True,inplace=True)
         #Hashtable for Each Bank:
         banks = {"axis":{"date_col_index":0,"bal_col_index":5,
                          "columns":['tran_Date', 'chq_No', 'particulars', 'debit', 'credit', 'balance'],
@@ -1300,8 +1295,29 @@ def bank_stmt_readers(file,bank):
                                    "narration_col_index":1},
                  "kvb":{"date_col_index":0,"bal_col_index":7,
                               "columns":["tran_Date","value_Date","branch","chq_No","particulars","debit","credit","balance"],
-                                   "narration_col_index":4}
+                                   "narration_col_index":4},
+                 "federal":{"date_col_index":0,"bal_col_index":7,
+                              "columns":["tran_Date","value_Date","particulars","tran_Type","chq_No","debit","credit","balance"],
+                                   "narration_col_index":2}
                 }
+        #Make all the None values are Null Values:
+        df[df.values == None] = np.nan
+        # Avoiding Particulars being null
+        res = df
+        #Removing Null values date records: 
+        df = df[df.iloc[:,0].notnull()]
+        #Getting Particular column for corresponding bank:
+        narration_col_index = banks[bank].get("narration_col_index")
+        df_index = df.index.tolist()
+        for i in df_index:
+            if(str(df.loc[i,narration_col_index]) == "nan"):
+                #--------------------------->
+                try:
+                    df.loc[i,narration_col_index] = res.loc[i+1,narration_col_index]
+                except:
+                    pass
+        #Reset Dataframe Index:
+        df.reset_index(drop=True,inplace=True)
         #Gettitng date column index for correspoding bank:
         date_col_index = banks[bank].get("date_col_index")
         #Extracting Records that contain Date:
@@ -1321,7 +1337,7 @@ def bank_stmt_readers(file,bank):
         #Gettitng balance column index for correspoding bank:
         bal_col_index = banks[bank].get("bal_col_index")
         #Applying Mask:
-        if((bank != "axis") | (bank != "federal")):
+        if((bank != "axis") & (bank != "federal")):
             if(df.shape[1] > bal_col_index+1):
                 for i in range(len(df)):
                     if(str(df.iloc[i,bal_col_index+1]) != "nan"):
@@ -1375,11 +1391,7 @@ def bank_stmt_readers(file,bank):
         df.columns = banks[bank].get("columns")
         #Paring Date:
         df.iloc[:,date_col_index] = df.iloc[:,date_col_index].astype(str)
-        ##################
-        df.to_csv("test.csv",index = False)
-        ##################
         #Gettitng description column index for correspoding bank:
-        narration_col_index = banks[bank].get("narration_col_index")
         narration = []
         for i in df.iloc[:,narration_col_index]:
             narration.append(re.sub('[^A-Za-z0-9]+', ' ', i))
