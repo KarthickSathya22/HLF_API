@@ -1296,7 +1296,7 @@ def bank_stmt_readers(file,bank):
                                   "narration_col_index":2
                                  },
                  "cub":{"date_col_index":0,"bal_col_index":5,
-                              "columns":["tran_Date","particulars","chq_No","debit","CREDIT","balance"],
+                              "columns":["tran_Date","particulars","chq_No","debit","credit","balance"],
                                    "narration_col_index":1},
                  "kvb":{"date_col_index":0,"bal_col_index":7,
                               "columns":["tran_Date","value_Date","branch","chq_No","particulars","debit","credit","balance"],
